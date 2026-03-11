@@ -1,0 +1,461 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API Bun Express Boilerplate",
+    "version": "1.0.0",
+    "description": "Contract for the boilerplate API surface."
+  },
+  "servers": [
+    { "url": "http://localhost:3000" }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "summary": "Liveness check",
+        "responses": {
+          "200": {
+            "description": "Service is alive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["ok"],
+                  "properties": {
+                    "ok": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz/readyz": {
+      "get": {
+        "summary": "Readiness check",
+        "responses": {
+          "200": {
+            "description": "Dependencies are ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["ok", "checks"],
+                  "properties": {
+                    "ok": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency check failed",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "summary": "Register user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RegisterResponse" }
+              }
+            }
+          },
+          "409": {
+            "description": "Duplicate email",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Login user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "summary": "Logout",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "204": { "description": "Logged out" },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "summary": "List users",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 0, "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List users",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ListUsersResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create user",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateUserRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreateUserResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "409": {
+            "description": "Duplicate user",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "summary": "Get user by id",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreateUserResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/example": {
+      "get": {
+        "summary": "Template feature endpoint",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "ProblemDetails": {
+        "type": "object",
+        "required": ["type", "title", "status", "instance"],
+        "properties": {
+          "type": { "type": "string", "format": "uri-reference" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" },
+          "detail": { "type": "string" },
+          "instance": { "type": "string", "format": "uri-reference" },
+          "requestId": { "type": "string" },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "fullName", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "fullName": { "type": "string", "minLength": 2, "maxLength": 120 },
+          "password": { "type": "string", "minLength": 10, "maxLength": 128 }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 1 }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": ["id", "email", "fullName"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string", "format": "email" },
+          "fullName": { "type": "string" }
+        }
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["tokenType", "accessToken", "expiresAt", "user"],
+            "properties": {
+              "tokenType": { "type": "string", "enum": ["Bearer"] },
+              "accessToken": { "type": "string" },
+              "expiresAt": { "type": "string", "format": "date-time" },
+              "user": { "$ref": "#/components/schemas/User" }
+            }
+          }
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "required": ["email", "fullName"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "fullName": { "type": "string", "minLength": 2, "maxLength": 120 }
+        }
+      },
+      "CreateUserResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": ["id", "email", "full_name", "created_at", "updated_at"],
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "email": { "type": "string", "format": "email" },
+              "full_name": { "type": "string" },
+              "created_at": { "type": "string", "format": "date-time" },
+              "updated_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "ListUsersResponse": {
+        "type": "object",
+        "required": ["data", "meta"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "email", "full_name", "created_at", "updated_at"],
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "email": { "type": "string", "format": "email" },
+                "full_name": { "type": "string" },
+                "created_at": { "type": "string", "format": "date-time" },
+                "updated_at": { "type": "string", "format": "date-time" }
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "required": ["limit", "offset", "count"],
+            "properties": {
+              "limit": { "type": "integer" },
+              "offset": { "type": "integer" },
+              "count": { "type": "integer" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

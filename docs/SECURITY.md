@@ -11,6 +11,7 @@
 
 - All request inputs are validated via Zod schemas in `src/request/*`
 - Validation failures return Problem Details with status `400` or `422`
+- Write endpoints enforce `Content-Type: application/json` and return `415` otherwise
 
 ## Error handling standard
 
@@ -24,6 +25,12 @@
 - Use structured logging from `src/provider/logger.ts`
 - Include `requestId` on request and error events
 - Never log secrets, raw bearer tokens, or passwords
+
+## Transport and header hardening
+
+- `x-powered-by` is disabled
+- Security headers are set globally (nosniff, frame deny, strict referrer policy)
+- `TRUST_PROXY` must be explicitly configured for reverse-proxy deployments
 
 ## Security checks for new features
 

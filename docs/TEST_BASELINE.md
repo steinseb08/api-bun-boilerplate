@@ -15,6 +15,10 @@
 - invalid input path
 - auth failure path for protected routes
 
+4. Contract tests
+- OpenAPI spec path coverage checks
+- Problem Details/content-type checks on critical failure paths
+
 ## Current commands
 
 - Run all tests:
@@ -25,6 +29,11 @@ bun test
 - Run with coverage:
 ```bash
 bun run test:coverage
+```
+
+- Run contract tests only:
+```bash
+bun run test:contract
 ```
 
 - CI local check:

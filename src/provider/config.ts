@@ -7,12 +7,21 @@ const BooleanEnvSchema = z.preprocess((value) => {
   if (value === "false") return false;
   return value;
 }, z.boolean());
+const TrustProxyEnvSchema = z.preprocess((value) => {
+  if (value === undefined || value === "") return false;
+  if (value === true || value === false) return value;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  if (typeof value === "string") return value;
+  return false;
+}, z.union([z.boolean(), z.string().trim().min(1)]));
 
 const EnvSchema = z
   .object({
     NODE_ENV: NodeEnvSchema.default("development"),
     HOST: z.string().trim().min(1).default("0.0.0.0"),
     PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+    TRUST_PROXY: TrustProxyEnvSchema.default(false),
 
     DATABASE_URL: z.string().trim().min(1).optional(),
     REDIS_URL: z.string().trim().min(1).optional(),

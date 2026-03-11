@@ -16,7 +16,14 @@ export function createUsersRouter(deps: { repo: IUsersRepo }): Router {
       });
 
       const users = await deps.repo.list(query.limit, query.offset);
-      return res.status(200).json({ data: users });
+      return res.status(200).json({
+        data: users,
+        meta: {
+          limit: query.limit,
+          offset: query.offset,
+          count: users.length,
+        },
+      });
     } catch (error) {
       if (error instanceof ZodError) {
         return sendProblem(req, res, {

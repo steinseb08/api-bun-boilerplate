@@ -2,6 +2,7 @@ import express from "express";
 import { createAuthMiddleware } from "./middleware/auth";
 import { createRateLimitMiddleware } from "./middleware/rate-limit";
 import { createRequestLoggingMiddleware } from "./middleware/request-logging";
+import { createJsonContentTypeMiddleware, createSecurityHeadersMiddleware } from "./middleware/security";
 import { cache } from "./provider/cache";
 import { env } from "./provider/config";
 import { db } from "./provider/db";
@@ -15,7 +16,12 @@ import { sendProblem } from "./utils/problem";
 
 export const app = express();
 
+app.disable("x-powered-by");
+app.set("trust proxy", env.TRUST_PROXY);
+
 app.use(createRequestLoggingMiddleware(logger));
+app.use(createSecurityHeadersMiddleware());
+app.use(createJsonContentTypeMiddleware());
 app.use(express.json({ limit: env.BODY_LIMIT_BYTES }));
 
 const globalRateLimiter = createRateLimitMiddleware({

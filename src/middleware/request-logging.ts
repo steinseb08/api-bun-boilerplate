@@ -27,11 +27,13 @@ export function createRequestLoggingMiddleware(baseLogger: Logger): RequestHandl
     });
 
     res.on("finish", () => {
+      const durationMs = Date.now() - startedAt;
+
       requestLogger.info("request.completed", {
         method: req.method,
         path: req.path,
         statusCode: res.statusCode,
-        durationMs: Date.now() - startedAt,
+        durationMs,
       });
     });
 

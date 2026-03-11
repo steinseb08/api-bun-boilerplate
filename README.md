@@ -10,6 +10,7 @@ Production-oriented API boilerplate using Bun runtime, Express routing, Zod vali
 - Session-based auth baseline (opaque bearer token, token hash in DB)
 - Global + auth-focused rate limiting middleware
 - Cache provider abstraction (`noop`, `memory`, `redis`)
+- Security headers + JSON content-type enforcement for write endpoints
 - SQL-first migration flow
 - Documentation and templates for fast feature delivery
 
@@ -128,6 +129,7 @@ See `.env.example` for full list.
 Common keys:
 
 - `NODE_ENV`, `HOST`, `PORT`
+- `TRUST_PROXY`
 - `DATABASE_URL`
 - `CACHE_MODE`, `REDIS_URL`
 - `SESSION_TTL_SECONDS`
@@ -149,6 +151,12 @@ Or combined:
 bun run ci:check
 ```
 
+Contract tests only:
+
+```bash
+bun run test:contract
+```
+
 ## Feature development workflow
 
 1. Define request schemas in `src/request/<feature>.ts`
@@ -168,6 +176,10 @@ Use starter templates:
 - `docs/INDEX.md`
 - `docs/IMPLEMENTATION_GUIDE.md`
 - `docs/FEATURE_TEMPLATE.md`
+- `openapi.json`
 - `docs/SECURITY.md`
 - `docs/RATE_LIMITING_AND_CACHING.md`
 - `docs/TEST_BASELINE.md`
+- `docs/OBSERVABILITY.md`
+- `docs/DATA_API_QUALITY.md`
+- `docs/OPERATIONS.md`

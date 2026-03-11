@@ -18,6 +18,7 @@ const RFC_TYPE_BY_STATUS: Record<number, string> = {
   404: "https://tools.ietf.org/html/rfc9110#section-15.5.5",
   409: "https://tools.ietf.org/html/rfc9110#section-15.5.10",
   413: "https://tools.ietf.org/html/rfc9110#section-15.5.14",
+  415: "https://tools.ietf.org/html/rfc9110#section-15.5.16",
   422: "https://tools.ietf.org/html/rfc9110#section-15.5.21",
   429: "https://tools.ietf.org/html/rfc6585#section-4",
   500: "https://tools.ietf.org/html/rfc9110#section-15.6.1",

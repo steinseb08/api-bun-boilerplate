@@ -17,6 +17,8 @@ This repository is a Bun + Express API boilerplate with strict conventions.
 
 4. Problem Details by default
 - All errors must be returned as `application/problem+json`.
+5. Keep API contract updated
+- Update `openapi.json` when endpoint request/response contracts change.
 
 ## Where to start
 
@@ -25,6 +27,7 @@ Use these docs in order:
 2. `docs/SECURITY.md`
 3. `docs/RATE_LIMITING_AND_CACHING.md`
 4. `docs/TEST_BASELINE.md`
+5. `openapi.json`
 
 ## Boilerplate starter files
 
