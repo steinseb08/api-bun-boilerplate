@@ -1,111 +1,43 @@
----
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
-globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
----
+# CLAUDE.md
 
-Default to using Bun instead of Node.js.
+Concise contributor/agent rules for this API boilerplate.
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Use `bunx <package> <command>` instead of `npx <package> <command>`
-- Bun automatically loads .env, so don't use dotenv.
+## Stack
 
-## APIs
+- Runtime/tooling: Bun
+- HTTP server: Express
+- Validation: Zod
+- Database: Postgres via Bun SQL
+- Cache: in-memory or Redis via provider abstraction
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+## Conventions
 
-## Testing
+1. Use strict env from `src/provider/config.ts`.
+2. Keep features split across:
+   - `src/request/<feature>.ts`
+   - `src/repo/<feature>.ts`
+   - `src/routes/<feature>.ts`
+3. Build repos as OO + DI (`I*Repo` + `class *Repo`).
+4. Keep routes thin and focused on HTTP mapping.
+5. Return Problem Details for errors.
 
-Use `bun test` to run tests.
+## SQL and security
 
-```ts#index.test.ts
-import { test, expect } from "bun:test";
+- Parameterize all runtime SQL with tagged templates.
+- Never concatenate user input into SQL.
+- `unsafe()` only for trusted migration file execution.
+- Do not log secrets or credentials.
 
-test("hello world", () => {
-  expect(1).toBe(1);
-});
+## Quality gates
+
+Run before opening PR:
+
+```bash
+bun run ci:check
+bun run migrate:smoke
 ```
 
-## Frontend
+## Documentation entrypoints
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
-
-Server:
-
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
-
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
-
-// import .css files directly and it works
-import './index.css';
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+- `README.md`
+- `docs/INDEX.md`

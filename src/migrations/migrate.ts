@@ -27,7 +27,7 @@ async function getMigrationFiles(): Promise<string[]> {
   return files.sort((a, b) => a.localeCompare(b));
 }
 
-async function run(): Promise<void> {
+export async function runMigrations(): Promise<void> {
   await ensureMigrationsTable();
 
   const [files, applied] = await Promise.all([getMigrationFiles(), getAppliedVersions()]);
@@ -53,7 +53,9 @@ async function run(): Promise<void> {
   console.log("Migrations complete.");
 }
 
-run().catch((error) => {
-  console.error("Migration failed", error);
-  process.exit(1);
-});
+if (import.meta.main) {
+  runMigrations().catch((error) => {
+    console.error("Migration failed", error);
+    process.exit(1);
+  });
+}

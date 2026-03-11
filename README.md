@@ -1,38 +1,36 @@
-# API (Bun + Express + Zod + Postgres)
+# API Bun Express Boilerplate
 
-API med fokus på:
-- Strict typed env + hard validation at startup
-- Env-driven Problem Type URIs (RFC 9457 style)
-- Problem Details (`application/problem+json`) for all errors
-- Object-oriented repos + dependency injection
-- DB-backed opaque session tokens (no JWT in v1)
-- Structured logging + optional cache provider
+Production-oriented API boilerplate using Bun runtime, Express routing, Zod validation, Bun SQL for Postgres, and RFC 9457-style Problem Details.
 
-## Structure
+## What this gives you
 
-- `src/provider/config.ts`
-- `src/provider/db.ts`
-- `src/provider/http.ts`
-- `src/provider/cache.ts` (`noop`, `memory`, `redis`)
-- `src/provider/logger.ts`
-- `src/middleware/*.ts` (auth/rate-limit/request-logging)
-- `src/repo/*.ts`
-- `src/request/*.ts`
-- `src/routes/*.ts`
-- `src/utils/*.ts`
-- `src/migrations/*.sql`
+- Strict, typed environment validation at startup
+- Consistent error model with `application/problem+json`
+- Object-oriented repositories with dependency injection
+- Session-based auth baseline (opaque bearer token, token hash in DB)
+- Global + auth-focused rate limiting middleware
+- Cache provider abstraction (`noop`, `memory`, `redis`)
+- SQL-first migration flow
+- Documentation and templates for fast feature delivery
 
-## Run
+## Architecture overview
 
-```bash
-bun install
-docker compose up -d
-cp .env.example .env
-bun run migrate
-bun run dev
-```
+Code is organized by responsibility:
 
-## Endpoints
+- `src/provider/*`:
+  - `config.ts`: env parsing/validation
+  - `db.ts`: Bun SQL client
+  - `http.ts`: outbound HTTP client abstraction
+  - `cache.ts`: cache abstraction and implementations
+  - `logger.ts`: structured logging
+- `src/request/*`: Zod schemas for request parsing/normalization
+- `src/repo/*`: data/integration layer (`I*Repo` + `class *Repo`)
+- `src/routes/*`: Express routers (HTTP mapping only)
+- `src/middleware/*`: auth, rate limit, request logging
+- `src/utils/*`: Problem Details + reusable helpers
+- `src/migrations/*`: SQL migration files + migration runner
+
+## API endpoints
 
 - `GET /healthz` (liveness)
 - `GET /healthz/readyz` (readiness)
@@ -42,18 +40,134 @@ bun run dev
 - `GET /api/v1/users?limit=20&offset=0` (Bearer)
 - `GET /api/v1/users/:id` (Bearer)
 - `POST /api/v1/users` (Bearer)
-- `GET /api/v1/example` (template route for new features)
+- `GET /api/v1/example` (feature template route)
 
-## Key env
+## Quick start (local)
 
-- `CACHE_MODE`: `noop|memory|redis`
-- `AUTH_RATE_LIMIT_*` and `GLOBAL_RATE_LIMIT_*`
-- `SESSION_TTL_SECONDS`, password policy/hash settings
-
-## Quality gates
+### 1) Install dependencies
 
 ```bash
-bun run ci:check
+bun install
+```
+
+### 2) Start dependencies
+
+```bash
+docker compose up -d
+```
+
+### 3) Configure environment
+
+```bash
+cp .env.example .env
+```
+
+### 4) Run migrations
+
+```bash
+bun run migrate
+```
+
+### 5) Start API
+
+```bash
+bun run dev
+```
+
+## Docker hardened image (DHI)
+
+### Build
+
+```bash
+docker login dhi.io
+docker build -f Dockerfile.dhi -t api-bun-express:dhi .
+```
+
+### Build with private npm token
+
+```bash
+docker build -f Dockerfile.dhi -t api-bun-express:dhi \
+  --secret id=NPM_TOKEN,env=NPM_TOKEN .
+```
+
+### Run
+
+```bash
+docker run --rm -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e HOST=0.0.0.0 \
+  -e PORT=3000 \
+  -e DATABASE_URL='postgres://app:app@host.docker.internal:5432/app' \
+  -e CACHE_MODE=redis \
+  -e REDIS_URL='redis://host.docker.internal:6379' \
+  api-bun-express:dhi
+```
+
+## Error handling standard (RFC 9457 style)
+
+All errors should return `application/problem+json` with:
+
+- `type`
+- `title`
+- `status`
+- `detail`
+- `instance`
+
+Project helper: `src/utils/problem.ts`.
+
+## SQL safety rule
+
+- Runtime SQL must be parameterized with Bun tagged templates.
+- No string-concatenated SQL.
+- `unsafe()` is only allowed for trusted migration file execution.
+
+## Env highlights
+
+See `.env.example` for full list.
+
+Common keys:
+
+- `NODE_ENV`, `HOST`, `PORT`
+- `DATABASE_URL`
+- `CACHE_MODE`, `REDIS_URL`
+- `SESSION_TTL_SECONDS`
+- `AUTH_RATE_LIMIT_*`, `GLOBAL_RATE_LIMIT_*`
+
+## Testing and quality gates
+
+Run these before commit/PR:
+
+```bash
+bun run typecheck
 bun run test:coverage
 bun run migrate:smoke
 ```
+
+Or combined:
+
+```bash
+bun run ci:check
+```
+
+## Feature development workflow
+
+1. Define request schemas in `src/request/<feature>.ts`
+2. Implement repo in `src/repo/<feature>.ts`
+3. Implement router in `src/routes/<feature>.ts`
+4. Mount route in `src/app.ts`
+5. Add tests in `test/*`
+
+Use starter templates:
+
+- `src/request/example.ts`
+- `src/repo/example.ts`
+- `src/routes/example.ts`
+
+## Documentation map
+
+- `docs/INDEX.md`
+- `docs/IMPLEMENTATION_GUIDE.md`
+- `docs/FEATURE_TEMPLATE.md`
+- `docs/SECURITY.md`
+- `docs/RATE_LIMITING_AND_CACHING.md`
+- `docs/TEST_BASELINE.md`

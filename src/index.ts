@@ -1,8 +1,20 @@
 import { app } from "./app";
+import { runMigrations } from "./migrations/migrate";
 import { cache } from "./provider/cache";
 import { env } from "./provider/config";
 import { db } from "./provider/db";
 import { logger } from "./provider/logger";
+
+if (env.NODE_ENV === "development") {
+  try {
+    await runMigrations();
+  } catch (error) {
+    logger.error("server.migrations.failed", {
+      errorMessage: error instanceof Error ? error.message : String(error),
+    });
+    process.exit(1);
+  }
+}
 
 const server = app.listen(env.PORT, env.HOST, () => {
   logger.info("server.started", {

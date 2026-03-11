@@ -1,0 +1,11 @@
+.git
+.gitignore
+.cursor
+node_modules
+.env
+.env.*
+docker-compose.yml
+docs
+test
+*.log
+coverage
