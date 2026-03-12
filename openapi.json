@@ -183,7 +183,14 @@
           {
             "name": "offset",
             "in": "query",
-            "schema": { "type": "integer", "minimum": 0, "default": 0 }
+            "schema": { "type": "integer", "minimum": 0, "default": 0 },
+            "description": "Offset pagination mode. Cannot be combined with cursor."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Cursor pagination mode. Cannot be combined with offset."
           }
         ],
         "responses": {
@@ -447,11 +454,13 @@
           },
           "meta": {
             "type": "object",
-            "required": ["limit", "offset", "count"],
+            "required": ["mode", "limit", "count"],
             "properties": {
+              "mode": { "type": "string", "enum": ["offset", "cursor"] },
               "limit": { "type": "integer" },
               "offset": { "type": "integer" },
-              "count": { "type": "integer" }
+              "count": { "type": "integer" },
+              "nextCursor": { "type": ["string", "null"] }
             }
           }
         }

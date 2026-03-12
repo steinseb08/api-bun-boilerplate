@@ -8,7 +8,7 @@ Each feature must follow the same architecture:
 - `request/*`: Zod schemas (validation/sanitization)
 - `repo/*`: class + interface, business/integration logic
 - `routes/*`: HTTP mapping + Problem Details
-- `app.ts`: mount router under `/api/v1/...`
+- app composition file: mount route under `/api/v1/...`
 
 ## Step 1: Request contract
 
@@ -50,7 +50,7 @@ Use as base:
 
 ## Step 4: Composition root
 
-In `src/app.ts`:
+In the active app file (`src/app.express.ts` or `src/app.elysia.ts`):
 - mount the router with a stable versioned path:
 - `app.use("/api/v1/<feature>", <feature>Router)`
 

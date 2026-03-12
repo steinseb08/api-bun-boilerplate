@@ -1,4 +1,6 @@
-import { app } from "./app";
+import type { Server as HttpServer } from "node:http";
+import { appExpress } from "./app.express";
+import { appElysia } from "./app.elysia";
 import { runMigrations } from "./migrations/migrate";
 import { cache } from "./provider/cache";
 import { env } from "./provider/config";
@@ -16,16 +18,40 @@ if (env.NODE_ENV === "development") {
   }
 }
 
-const server = app.listen(env.PORT, env.HOST, () => {
-  logger.info("server.started", {
-    host: env.HOST,
-    port: env.PORT,
+const framework = env.APP_FRAMEWORK;
+let expressServer: HttpServer | null = null;
+let elysiaServer: { stop?: () => void } | null = null;
+
+if (framework === "elysia") {
+  elysiaServer = appElysia.listen(
+    { port: env.PORT, hostname: env.HOST },
+    () => {
+      logger.info("server.started", {
+        framework,
+        host: env.HOST,
+        port: env.PORT,
+      });
+    },
+  );
+} else {
+  expressServer = appExpress.listen(env.PORT, env.HOST, () => {
+    logger.info("server.started", {
+      framework,
+      host: env.HOST,
+      port: env.PORT,
+    });
   });
-});
+}
 
 async function shutdown(signal: string): Promise<void> {
   logger.info("server.shutdown", { signal });
-  server.close();
+  if (expressServer) {
+    expressServer.close();
+  }
+
+  if (elysiaServer?.stop) {
+    elysiaServer.stop();
+  }
 
   if ("close" in db && typeof db.close === "function") {
     await db.close();

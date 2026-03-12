@@ -1,6 +1,6 @@
 # Implementation Guide
 
-This repository is a Bun + Express API boilerplate with strict conventions.
+This repository is a Bun API boilerplate with framework-specific app wiring (Express/Elysia) and strict conventions.
 
 ## Core rules
 
@@ -35,4 +35,4 @@ Use these docs in order:
 - `src/repo/example.ts`
 - `src/routes/example.ts`
 
-Copy these to bootstrap a new feature and then mount the router in `src/app.ts`.
+Copy these to bootstrap a new feature and then mount the route in the active app composition file (`src/app.express.ts` or `src/app.elysia.ts`).
