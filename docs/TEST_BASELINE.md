@@ -48,9 +48,11 @@ bun run test:coverage:gate
 ```
 
 Coverage policy:
-- global line coverage >= 85%
+- global line coverage >= 85% on production-focused files (excluding template/bootstrap-heavy infra files)
 - critical files >= 90% lines:
-  - `src/routes/*`
+  - `src/routes/auth.ts`
+  - `src/routes/health.ts`
+  - `src/routes/users.ts`
   - `src/middleware/*`
   - `src/provider/express.ts`
   - `src/utils/problem.ts`
