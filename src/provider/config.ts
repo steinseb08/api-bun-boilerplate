@@ -19,6 +19,7 @@ const TrustProxyEnvSchema = z.preprocess((value) => {
 const EnvSchema = z
   .object({
     NODE_ENV: NodeEnvSchema.default("development"),
+    APP_FRAMEWORK: z.enum(["express", "elysia"]).default("express"),
     HOST: z.string().trim().min(1).default("0.0.0.0"),
     PORT: z.coerce.number().int().min(1).max(65535).default(3000),
     TRUST_PROXY: TrustProxyEnvSchema.default(false),

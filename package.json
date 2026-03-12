@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "bun --hot src/index.ts",
     "start": "bun src/index.ts",
+    "start:express": "APP_FRAMEWORK=express bun src/index.ts",
+    "start:elysia": "APP_FRAMEWORK=elysia bun src/index.ts",
     "migrate": "bun src/migrations/migrate.ts",
     "migrate:smoke": "bun src/migrations/migrate.ts",
     "test": "bun test",
@@ -13,7 +15,9 @@
     "test:coverage": "bun test --coverage",
     "bench:express": "BENCH_PORT=3101 bun bench/express.server.ts",
     "bench:elysia": "BENCH_PORT=3102 bun bench/elysia.server.ts",
+    "bench:elysia:real": "BENCH_PORT=3301 BENCH_HOST=0.0.0.0 bun bench/elysia.real.server.ts",
     "bench:run": "bash bench/run-benchmark.sh",
+    "bench:real": "bash bench/run-real-api-benchmark.sh",
     "typecheck": "bunx tsc --noEmit",
     "ci:check": "bun run typecheck && bun run test:coverage"
   },

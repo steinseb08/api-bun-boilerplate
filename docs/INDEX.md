@@ -14,6 +14,9 @@ Start here to navigate the boilerplate docs.
 - `docs/DATA_API_QUALITY.md`: response, pagination, compatibility and integrity rules
 - `docs/OPERATIONS.md`: runtime operations and incident runbook
 - `docs/BENCHMARK_ELYSIA_EXPERIMENT.md`: express vs elysia benchmark spike guide
+- `docs/REAL_API_BENCHMARK_PLAN.md`: benchmarking plan for real authenticated API endpoints
+- `docs/API_VERSIONING.md`: versioning policy and compatibility rules
+- `docs/PAGINATION.md`: offset vs cursor pagination behavior and guarantees
 
 ## Suggested reading order
 

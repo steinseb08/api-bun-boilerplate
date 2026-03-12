@@ -9,19 +9,39 @@ export type UserRecord = {
 };
 
 export interface IUsersRepo {
-  list(limit: number, offset: number): Promise<UserRecord[]>;
+  listByOffset(limit: number, offset: number): Promise<UserRecord[]>;
+  listByCursor(limit: number, cursor?: { createdAt: string; id: string }): Promise<UserRecord[]>;
   getById(id: string): Promise<UserRecord | null>;
   create(input: { email: string; fullName: string }): Promise<UserRecord>;
 }
 
 export class UsersRepo implements IUsersRepo {
-  async list(limit: number, offset: number): Promise<UserRecord[]> {
+  async listByOffset(limit: number, offset: number): Promise<UserRecord[]> {
     return db<UserRecord[]>`
       SELECT id, email, full_name, created_at, updated_at
       FROM users
-      ORDER BY created_at DESC
+      ORDER BY created_at DESC, id DESC
       LIMIT ${limit}
       OFFSET ${offset}
+    `;
+  }
+
+  async listByCursor(limit: number, cursor?: { createdAt: string; id: string }): Promise<UserRecord[]> {
+    if (!cursor) {
+      return db<UserRecord[]>`
+        SELECT id, email, full_name, created_at, updated_at
+        FROM users
+        ORDER BY created_at DESC, id DESC
+        LIMIT ${limit}
+      `;
+    }
+
+    return db<UserRecord[]>`
+      SELECT id, email, full_name, created_at, updated_at
+      FROM users
+      WHERE (created_at, id) < (${cursor.createdAt}, ${cursor.id})
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${limit}
     `;
   }
 

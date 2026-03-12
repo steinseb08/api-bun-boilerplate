@@ -1,6 +1,6 @@
 # API Bun Express Boilerplate
 
-Production-oriented API boilerplate using Bun runtime, Express routing, Zod validation, Bun SQL for Postgres, and RFC 9457-style Problem Details.
+Production-oriented API boilerplate using Bun runtime, framework-pluggable app composition (Express/Elysia), Zod validation, Bun SQL for Postgres, and RFC 9457-style Problem Details.
 
 ## What this gives you
 
@@ -11,6 +11,7 @@ Production-oriented API boilerplate using Bun runtime, Express routing, Zod vali
 - Global + auth-focused rate limiting middleware
 - Cache provider abstraction (`noop`, `memory`, `redis`)
 - Security headers + JSON content-type enforcement for write endpoints
+- Cursor + offset pagination support for users list endpoint
 - SQL-first migration flow
 - Documentation and templates for fast feature delivery
 
@@ -26,10 +27,11 @@ Code is organized by responsibility:
   - `logger.ts`: structured logging
 - `src/request/*`: Zod schemas for request parsing/normalization
 - `src/repo/*`: data/integration layer (`I*Repo` + `class *Repo`)
-- `src/routes/*`: Express routers (HTTP mapping only)
+- `src/routes/*`: route handlers/factories for framework integrations
 - `src/middleware/*`: auth, rate limit, request logging
 - `src/utils/*`: Problem Details + reusable helpers
 - `src/migrations/*`: SQL migration files + migration runner
+- `src/app.express.ts` and `src/app.elysia.ts`: framework-specific app wiring
 
 ## API endpoints
 
@@ -39,6 +41,7 @@ Code is organized by responsibility:
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/logout` (Bearer)
 - `GET /api/v1/users?limit=20&offset=0` (Bearer)
+- `GET /api/v1/users?limit=20&cursor=<token>` (Bearer)
 - `GET /api/v1/users/:id` (Bearer)
 - `POST /api/v1/users` (Bearer)
 - `GET /api/v1/example` (feature template route)
@@ -73,6 +76,13 @@ bun run migrate
 
 ```bash
 bun run dev
+```
+
+Choose framework explicitly:
+
+```bash
+bun run start:express
+bun run start:elysia
 ```
 
 ## Docker hardened image (DHI)
@@ -128,7 +138,7 @@ See `.env.example` for full list.
 
 Common keys:
 
-- `NODE_ENV`, `HOST`, `PORT`
+- `NODE_ENV`, `APP_FRAMEWORK`, `HOST`, `PORT`
 - `TRUST_PROXY`
 - `DATABASE_URL`
 - `CACHE_MODE`, `REDIS_URL`
@@ -183,3 +193,5 @@ Use starter templates:
 - `docs/OBSERVABILITY.md`
 - `docs/DATA_API_QUALITY.md`
 - `docs/OPERATIONS.md`
+- `docs/API_VERSIONING.md`
+- `docs/PAGINATION.md`

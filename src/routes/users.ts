@@ -2,6 +2,7 @@ import { Router } from "express";
 import { ZodError } from "zod";
 import { CreateUserSchema, ListUsersQuerySchema, UserIdParamsSchema } from "../request/users";
 import { usersRepo, type IUsersRepo } from "../repo/users";
+import { decodeUsersCursor, encodeUsersCursor } from "../utils/pagination";
 import { sendProblem } from "../utils/problem";
 import { zodErrorToFieldMap } from "../utils/validation";
 
@@ -13,14 +14,38 @@ export function createUsersRouter(deps: { repo: IUsersRepo }): Router {
       const query = ListUsersQuerySchema.parse({
         limit: req.query.limit,
         offset: req.query.offset,
+        cursor: req.query.cursor,
       });
 
-      const users = await deps.repo.list(query.limit, query.offset);
+      if (query.cursor !== undefined) {
+        const decodedCursor = decodeUsersCursor(query.cursor);
+        const users = await deps.repo.listByCursor(query.limit + 1, decodedCursor);
+        const hasMore = users.length > query.limit;
+        const page = hasMore ? users.slice(0, query.limit) : users;
+        const last = page[page.length - 1];
+        const nextCursor = hasMore && last
+          ? encodeUsersCursor({ createdAt: last.created_at, id: last.id })
+          : null;
+
+        return res.status(200).json({
+          data: page,
+          meta: {
+            mode: "cursor",
+            limit: query.limit,
+            count: page.length,
+            nextCursor,
+          },
+        });
+      }
+
+      const offset = query.offset ?? 0;
+      const users = await deps.repo.listByOffset(query.limit, offset);
       return res.status(200).json({
         data: users,
         meta: {
+          mode: "offset",
           limit: query.limit,
-          offset: query.offset,
+          offset,
           count: users.length,
         },
       });
@@ -31,6 +56,14 @@ export function createUsersRouter(deps: { repo: IUsersRepo }): Router {
           status: 400,
           detail: "Invalid query parameters",
           errors: zodErrorToFieldMap(error),
+        });
+      }
+
+      if (error instanceof Error && error.message.startsWith("Invalid cursor")) {
+        return sendProblem(req, res, {
+          title: "Bad Request",
+          status: 400,
+          detail: "Invalid cursor",
         });
       }
 
