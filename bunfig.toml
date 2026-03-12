@@ -1,0 +1,4 @@
+[install]
+# Enforce a 7-day cooldown on newly published package versions.
+minimumReleaseAge = 604800
+

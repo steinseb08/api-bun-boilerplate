@@ -42,6 +42,19 @@ bun run test:e2e
 NODE_ENV=test DB_DRIVER=sqlite bun test --coverage --preload ./test/setup.ts
 ```
 
+- Run coverage gate (CI style):
+```bash
+bun run test:coverage:gate
+```
+
+Coverage policy:
+- global line coverage >= 85%
+- critical files >= 90% lines:
+  - `src/routes/*`
+  - `src/middleware/*`
+  - `src/provider/express.ts`
+  - `src/utils/problem.ts`
+
 - Run contract tests only:
 ```bash
 NODE_ENV=test DB_DRIVER=sqlite bun test test/openapi.contract.test.ts --preload ./test/setup.ts

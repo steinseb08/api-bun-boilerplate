@@ -129,10 +129,15 @@ Project helper: `src/utils/problem.ts`.
 
 ## SQL safety rule
 
-- Runtime SQL must be parameterized with Bun tagged templates.
 - Runtime SQL must be parameterized through `appDb` placeholders.
 - No string-concatenated SQL.
 - `unsafe()` is only allowed for trusted migration file execution.
+
+## Dependency security
+
+- CI fails on known dependency vulnerabilities via `bun audit`.
+- Dependabot is enabled (`.github/dependabot.yml`).
+- `bunfig.toml` enforces a 7-day minimum release age for dependencies.
 
 ## Env highlights
 

@@ -38,6 +38,7 @@
 2. Ownership must be derived from auth context, never client-supplied user id
 3. External HTTP failures must be mapped to safe API errors (no internal leakage)
 4. DB writes must be parameterized; no string-concatenated SQL
+5. Dependency audit (`bun audit`) must pass in CI
 
 ## SQL safety
 
@@ -62,3 +63,8 @@ Guardrail for `unsafe()`:
 - `unsafe()` is allowed only for trusted static SQL files in migration execution.
 - `unsafe()` must never receive request data, headers, query params, or other untrusted input.
 - Runtime API queries must always use parameterized placeholders.
+
+## Dependency hardening
+
+- Dependabot is enabled for dependency/security update PRs.
+- `bunfig.toml` sets `minimumReleaseAge = 604800` (7 days) to reduce supply-chain risk from freshly published versions.
