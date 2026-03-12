@@ -2,13 +2,14 @@ import { Elysia } from "elysia";
 import { ZodError } from "zod";
 import { cache } from "./provider/cache";
 import { env } from "./provider/config";
-import { db } from "./provider/db";
+import { appDb } from "./provider/db";
 import { logger } from "./provider/logger";
 import { authRepo } from "./repo/auth";
 import { exampleRepo } from "./repo/example";
 import { usersRepo } from "./repo/users";
 import { LoginSchema, RegisterSchema } from "./request/auth";
 import { ExampleQuerySchema } from "./request/example";
+import { normalizeQueryInput } from "./request/listing";
 import { CreateUserSchema, ListUsersQuerySchema, UserIdParamsSchema } from "./request/users";
 import { decodeUsersCursor, encodeUsersCursor } from "./utils/pagination";
 import { generateOpaqueToken, hashPassword, sha256Hex, verifyPassword } from "./utils/security";
@@ -230,7 +231,7 @@ export const appElysia = new Elysia()
     let cacheOk: boolean | "skipped" = "skipped";
 
     try {
-      await db`SELECT 1`;
+      await appDb.ping();
       dbOk = true;
     } catch {
       dbOk = false;
@@ -423,29 +424,30 @@ export const appElysia = new Elysia()
 
     try {
       const url = new URL(request.url);
-      const query = ListUsersQuerySchema.parse({
-        limit: url.searchParams.get("limit") ?? undefined,
-        offset: url.searchParams.get("offset") ?? undefined,
-        cursor: url.searchParams.get("cursor") ?? undefined,
-      });
+      const query = ListUsersQuerySchema.parse(
+        normalizeQueryInput(Object.fromEntries(url.searchParams.entries())),
+      );
 
-      if (query.cursor !== undefined) {
-        const decodedCursor = decodeUsersCursor(query.cursor);
-        const users = await usersRepo.listByCursor(query.limit + 1, decodedCursor);
-        const hasMore = users.length > query.limit;
-        const page = hasMore ? users.slice(0, query.limit) : users;
-        const last = page[page.length - 1];
+      if (query.offset !== undefined) {
+        const users = await usersRepo.listByOffset({
+          limit: query.limit,
+          offset: query.offset,
+          q: query.q,
+          email: query.email,
+          createdFrom: query.createdFrom,
+          createdTo: query.createdTo,
+          sortBy: query.sortBy,
+          sortOrder: query.sortOrder,
+        });
 
         return new Response(
           JSON.stringify({
-            data: page,
+            data: users,
             meta: {
-              mode: "cursor",
+              mode: "offset",
               limit: query.limit,
-              count: page.length,
-              nextCursor: hasMore && last
-                ? encodeUsersCursor({ createdAt: last.created_at, id: last.id })
-                : null,
+              offset: query.offset,
+              count: users.length,
             },
           }),
           {
@@ -458,17 +460,33 @@ export const appElysia = new Elysia()
         );
       }
 
-      const offset = query.offset ?? 0;
-      const users = await usersRepo.listByOffset(query.limit, offset);
+      const decodedCursor = query.cursor ? decodeUsersCursor(query.cursor) : undefined;
+      const users = await usersRepo.listByCursor(
+        {
+          limit: query.limit + 1,
+          q: query.q,
+          email: query.email,
+          createdFrom: query.createdFrom,
+          createdTo: query.createdTo,
+          sortBy: query.sortBy,
+          sortOrder: query.sortOrder,
+        },
+        decodedCursor,
+      );
+      const hasMore = users.length > query.limit;
+      const page = hasMore ? users.slice(0, query.limit) : users;
+      const last = page[page.length - 1];
 
       return new Response(
         JSON.stringify({
-          data: users,
+          data: page,
           meta: {
-            mode: "offset",
+            mode: "cursor",
             limit: query.limit,
-            offset,
-            count: users.length,
+            count: page.length,
+            nextCursor: hasMore && last
+              ? encodeUsersCursor({ createdAt: last.created_at, id: last.id })
+              : null,
           },
         }),
         {

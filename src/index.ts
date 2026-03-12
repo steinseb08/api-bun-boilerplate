@@ -4,7 +4,7 @@ import { appElysia } from "./app.elysia";
 import { runMigrations } from "./migrations/migrate";
 import { cache } from "./provider/cache";
 import { env } from "./provider/config";
-import { db } from "./provider/db";
+import { closeDb } from "./provider/db";
 import { logger } from "./provider/logger";
 
 if (env.NODE_ENV === "development") {
@@ -53,9 +53,7 @@ async function shutdown(signal: string): Promise<void> {
     elysiaServer.stop();
   }
 
-  if ("close" in db && typeof db.close === "function") {
-    await db.close();
-  }
+  await closeDb();
 
   if (cache.close) {
     await cache.close();

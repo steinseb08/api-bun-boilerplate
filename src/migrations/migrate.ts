@@ -1,9 +1,11 @@
-import { db } from "../provider/db";
+import type { SQL } from "bun";
+import { env } from "../provider/config";
+import { getPostgresMigrationClient } from "../provider/db";
 
 const migrationsPath = "src/migrations";
 
-async function ensureMigrationsTable(): Promise<void> {
-  await db`
+async function ensureMigrationsTable(client: SQL): Promise<void> {
+  await client`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       version TEXT PRIMARY KEY,
       applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -11,8 +13,8 @@ async function ensureMigrationsTable(): Promise<void> {
   `;
 }
 
-async function getAppliedVersions(): Promise<Set<string>> {
-  const rows = await db<{ version: string }[]>`SELECT version FROM schema_migrations`;
+async function getAppliedVersions(client: SQL): Promise<Set<string>> {
+  const rows = await client<{ version: string }[]>`SELECT version FROM schema_migrations`;
   return new Set(rows.map((row) => row.version));
 }
 
@@ -27,21 +29,18 @@ async function getMigrationFiles(): Promise<string[]> {
   return files.sort((a, b) => a.localeCompare(b));
 }
 
-export async function runMigrations(): Promise<void> {
-  await ensureMigrationsTable();
-
-  const [files, applied] = await Promise.all([getMigrationFiles(), getAppliedVersions()]);
+async function runPostgresMigrations(client: SQL): Promise<void> {
+  await ensureMigrationsTable(client);
+  const [files, applied] = await Promise.all([getMigrationFiles(), getAppliedVersions(client)]);
 
   for (const file of files) {
     if (applied.has(file)) continue;
 
     const sql = await Bun.file(`${migrationsPath}/${file}`).text();
-
-    await db.begin(async (tx) => {
+    await client.begin(async (tx) => {
       await tx.unsafe(sql);
       await tx`INSERT INTO schema_migrations ${tx({ version: file })}`;
     });
-
     console.log(`Applied migration: ${file}`);
   }
 
@@ -51,6 +50,20 @@ export async function runMigrations(): Promise<void> {
   }
 
   console.log("Migrations complete.");
+}
+
+export async function runMigrations(): Promise<void> {
+  if (env.DB_DRIVER !== "postgres") {
+    console.log(`Skipping SQL migrations for DB_DRIVER=${env.DB_DRIVER} (SQLite bootstraps schema in provider/db.ts).`);
+    return;
+  }
+
+  const client = getPostgresMigrationClient();
+  if (!client) {
+    throw new Error("Postgres migration client is not available");
+  }
+
+  await runPostgresMigrations(client);
 }
 
 if (import.meta.main) {

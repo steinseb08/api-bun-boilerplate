@@ -1,12 +1,12 @@
 import { cache } from "./cache";
 import { env } from "./config";
-import { db } from "./db";
+import { appDb } from "./db";
 import { createHealthRouter } from "../routes/health";
 
 export function createAppHealthRouter() {
   return createHealthRouter({
     pingDb: async () => {
-      await db`SELECT 1`;
+      await appDb.ping();
     },
     pingCache: env.READINESS_CHECK_CACHE
       ? async () => {

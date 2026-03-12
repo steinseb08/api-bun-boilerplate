@@ -1,4 +1,4 @@
-import { db } from "../provider/db";
+import { appDb } from "../provider/db";
 import { http, type HttpClient } from "../provider/http";
 
 export interface IExampleRepo {
@@ -12,7 +12,7 @@ export class ExampleRepo implements IExampleRepo {
 
   async listFromDb(limit: number): Promise<unknown[]> {
     // Example of safe, parameterized SQL.
-    return db<unknown[]>`SELECT * FROM users ORDER BY created_at DESC LIMIT ${limit}`;
+    return appDb.query<unknown>("SELECT * FROM users ORDER BY created_at DESC, id DESC LIMIT ?", [limit]);
   }
 
   async fetchFromHttp(url: string): Promise<unknown> {

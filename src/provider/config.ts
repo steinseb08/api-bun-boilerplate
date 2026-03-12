@@ -20,11 +20,13 @@ const EnvSchema = z
   .object({
     NODE_ENV: NodeEnvSchema.default("development"),
     APP_FRAMEWORK: z.enum(["express", "elysia"]).default("express"),
+    DB_DRIVER: z.enum(["postgres", "sqlite"]).optional(),
     HOST: z.string().trim().min(1).default("0.0.0.0"),
     PORT: z.coerce.number().int().min(1).max(65535).default(3000),
     TRUST_PROXY: TrustProxyEnvSchema.default(false),
 
     DATABASE_URL: z.string().trim().min(1).optional(),
+    SQLITE_FILENAME: z.string().trim().min(1).optional(),
     REDIS_URL: z.string().trim().min(1).optional(),
     CACHE_MODE: z.enum(["noop", "memory", "redis"]).optional(),
 
@@ -70,7 +72,10 @@ if (!parsed.success) {
   throw new Error(`Invalid environment:\n${parsed.error.message}`);
 }
 
-if (!parsed.data.DATABASE_URL && parsed.data.NODE_ENV === "production") {
+const resolvedDbDriver = parsed.data.DB_DRIVER ?? (parsed.data.NODE_ENV === "test" ? "sqlite" : "postgres");
+const resolvedSqliteFilename = parsed.data.SQLITE_FILENAME ?? ":memory:";
+
+if (resolvedDbDriver === "postgres" && !parsed.data.DATABASE_URL && parsed.data.NODE_ENV === "production") {
   throw new Error("DATABASE_URL is required in production");
 }
 
@@ -78,5 +83,13 @@ if (parsed.data.CACHE_MODE === "redis" && !parsed.data.REDIS_URL) {
   throw new Error("REDIS_URL is required when CACHE_MODE=redis");
 }
 
-export const env = parsed.data;
+if (resolvedDbDriver === "postgres" && !parsed.data.DATABASE_URL && parsed.data.NODE_ENV !== "test") {
+  throw new Error("DATABASE_URL is required when DB_DRIVER=postgres");
+}
+
+export const env = {
+  ...parsed.data,
+  DB_DRIVER: resolvedDbDriver,
+  SQLITE_FILENAME: resolvedSqliteFilename,
+};
 export const isProduction = env.NODE_ENV === "production";

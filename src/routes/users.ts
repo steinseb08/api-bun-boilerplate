@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { ZodError } from "zod";
+import { normalizeQueryInput } from "../request/listing";
 import { CreateUserSchema, ListUsersQuerySchema, UserIdParamsSchema } from "../request/users";
 import { usersRepo, type IUsersRepo } from "../repo/users";
 import { decodeUsersCursor, encodeUsersCursor } from "../utils/pagination";
@@ -11,42 +12,57 @@ export function createUsersRouter(deps: { repo: IUsersRepo }): Router {
 
   router.get("/", async (req, res, next) => {
     try {
-      const query = ListUsersQuerySchema.parse({
-        limit: req.query.limit,
-        offset: req.query.offset,
-        cursor: req.query.cursor,
-      });
+      const query = ListUsersQuerySchema.parse(normalizeQueryInput(req.query as Record<string, unknown>));
 
-      if (query.cursor !== undefined) {
-        const decodedCursor = decodeUsersCursor(query.cursor);
-        const users = await deps.repo.listByCursor(query.limit + 1, decodedCursor);
-        const hasMore = users.length > query.limit;
-        const page = hasMore ? users.slice(0, query.limit) : users;
-        const last = page[page.length - 1];
-        const nextCursor = hasMore && last
-          ? encodeUsersCursor({ createdAt: last.created_at, id: last.id })
-          : null;
-
+      if (query.offset !== undefined) {
+        const users = await deps.repo.listByOffset({
+          limit: query.limit,
+          offset: query.offset,
+          q: query.q,
+          email: query.email,
+          createdFrom: query.createdFrom,
+          createdTo: query.createdTo,
+          sortBy: query.sortBy,
+          sortOrder: query.sortOrder,
+        });
         return res.status(200).json({
-          data: page,
+          data: users,
           meta: {
-            mode: "cursor",
+            mode: "offset",
             limit: query.limit,
-            count: page.length,
-            nextCursor,
+            offset: query.offset,
+            count: users.length,
           },
         });
       }
 
-      const offset = query.offset ?? 0;
-      const users = await deps.repo.listByOffset(query.limit, offset);
+      const decodedCursor = query.cursor ? decodeUsersCursor(query.cursor) : undefined;
+      const users = await deps.repo.listByCursor(
+        {
+          limit: query.limit + 1,
+          q: query.q,
+          email: query.email,
+          createdFrom: query.createdFrom,
+          createdTo: query.createdTo,
+          sortBy: query.sortBy,
+          sortOrder: query.sortOrder,
+        },
+        decodedCursor,
+      );
+      const hasMore = users.length > query.limit;
+      const page = hasMore ? users.slice(0, query.limit) : users;
+      const last = page[page.length - 1];
+      const nextCursor = hasMore && last
+        ? encodeUsersCursor({ createdAt: last.created_at, id: last.id })
+        : null;
+
       return res.status(200).json({
-        data: users,
+        data: page,
         meta: {
-          mode: "offset",
+          mode: "cursor",
           limit: query.limit,
-          offset,
-          count: users.length,
+          count: page.length,
+          nextCursor,
         },
       });
     } catch (error) {
